@@ -6,7 +6,7 @@ struct Place: Decodable {
 }
 
 struct Contents: Decodable {
-    let place_name: Stringㅌㅁ
+    let place_name: String
     let address_name: String
     let distance: String
 }

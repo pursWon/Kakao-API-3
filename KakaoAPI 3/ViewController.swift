@@ -1,63 +1,88 @@
 import UIKit
+import Alamofire
+
 
 class ViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     
     var dataList: [Contents] = []
+    var placeList: [Contents] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpTableView()
-        getCoffeeStoreInformation()
+        alamoFire2(url: url)
     }
     
-    let url: String = "https://dapi.kakao.com/v2/local/search/keyword.json?query=%EC%BB%A4%ED%94%BC&size=15&x=126.999398337486&y=37.5032064667979&radius=10000"
+    let url: String = "https://dapi.kakao.com/v2/local/search/keyword.json"
     
     func setUpTableView() {
         tableView.dataSource = self
         tableView.delegate = self
     }
     
-    func getCoffeeStoreInformation() {
+    // func alamofire(url: String) {
+    //     let headers: HTTPHeaders = [
+    //         "Authorization" : "KakaoAK d8b066a3dbb0e888b857f37b667d96d2"
+    //     ]
+    //
+    //     let parameters: [String : Any] = [
+    //         "query" : "해장국"
+    //     ]
+    //
+    //     AF.request(url, method: .get, parameters: parameters,headers: headers)
+    //         .validate(statusCode: 200..<300)
+    //         .responseData { response in
+    //             switch response.result {
+    //             case .success(let data):
+    //                 print("success: \(data)")
+    //                 let placeData = try? JSONDecoder().decode(Place.self, from: data)
+    //                 if let placeData = placeData {
+    //                     self.placeList = placeData.documents
+    //                     print(self.placeList[0].place_name)
+    //                     DispatchQueue.main.async {
+    //                         self.tableView.reloadData()
+    //                     }
+    //                 }
+    //
+    //             case .failure(let error):
+    //                 print("failure: \(error)")
+    //             }
+    //         }
+    // }
+    
+    func alamoFire2(url: String) {
+        let headers: HTTPHeaders = [
+            "Authorization" : "KakaoAK d8b066a3dbb0e888b857f37b667d96d2"
+        ]
         
-        guard let url = URL(string: url) else { return }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("KakaoAK d8b066a3dbb0e888b857f37b667d96d2", forHTTPHeaderField: "Authorization")
+        let parameters: [String : Any] = [
+            "query" : "장칼국수"
+        ]
         
-        let dataTask = URLSession.shared.dataTask(with: request) { data, response, error in
+        AF.request(url, method: .get, parameters: parameters, headers: headers).responseDecodable(of: Place.self) { response in
+            debugPrint(response)
+            print(response.value)
             
-            guard let data = data else { return }
-            guard let response = response as? HTTPURLResponse else { return }
-            guard error == nil else { return }
-            
-            switch response.statusCode {
-            case 200:
-                let data = try? JSONDecoder().decode(Place.self, from: data)
-                
-                if let data = data {
-                    self.dataList = data.documents
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                    }
+            if let data = response.value {
+                self.placeList = data.documents
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
                 }
-            default:
-                print("데이터 연결 실패")
             }
         }
-        dataTask.resume()
     }
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dataList.count
+        return placeList.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell" , for: indexPath) as? MyCell else { return UITableViewCell() }
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell" ,for: indexPath) as? MyCell else { return UITableViewCell() }
         
-        let contents = dataList[indexPath.row]
+        let contents = placeList[indexPath.row]
         cell.storeLabel.text = contents.place_name
         cell.addressLabel.text = contents.address_name
         cell.distanceLabel.text = contents.distance
